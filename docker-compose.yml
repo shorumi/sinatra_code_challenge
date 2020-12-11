@@ -1,0 +1,58 @@
+version: '3.7'
+
+x-base-app: &base_app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  volumes:
+      - ".:/app:cached"
+      - rails_cache:/app/tmp/cache
+      - bundle:/usr/local/bundle
+  depends_on:
+    - pgsql
+  stdin_open: true
+  tty: true
+  tmpfs: /tmp
+
+services:
+  visit_statistic_service:
+    <<: *base_app
+    entrypoint: ["sh", "./entrypoint.sh"]
+    depends_on:
+      - visits_api
+    env_file:
+      - .env
+
+  visits_api:
+    <<: *base_app
+    command: >
+      bash -c "bundle check
+      || bundle install
+      && bundle exec puma --config config/puma.rb"
+    ports:
+      - "${PORT}:${PORT}"
+    env_file:
+      - .env
+  
+  pgsql:
+    container_name: pgsql
+    image: 'postgres:${PG_MAJOR}'
+    environment:
+      POSTGRES_USER: '${PG_USER}'
+      POSTGRES_PASSWORD: '${PG_PWD}'
+    ports:
+      - '${PG_PORT}:${PG_PORT}'
+    env_file:
+      - .env
+    volumes:
+      - database_data:/var/lib/postgresql/data
+
+volumes:
+  rails_cache:
+  bundle:
+  database_data:
+
+networks:
+  default:
+    external:
+      name: dev_ntw

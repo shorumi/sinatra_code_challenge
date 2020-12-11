@@ -1,0 +1,19 @@
+default: &default
+  adapter: postgresql
+  host: pgsql
+  username: 'postgres' # If you change usr/pwd don't forget to change in DOTENV files as well
+  password: 'Abc1234'
+  pool: 5
+  timeout: 5000
+
+development:
+  <<: *default
+  database: visit_statistic_service_dev
+
+test:
+  <<: *default
+  database: visit_statistic_service_test
+
+production:
+  url: ENV['DATABASE_URL']
+  pool: ENV['DB_POOL']
